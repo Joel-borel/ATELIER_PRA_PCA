@@ -229,30 +229,38 @@ Difficulté : Moyenne (~45 minutes)
 Faites preuve de pédagogie et soyez clair dans vos explications et procedures de travail.  
 
 **Exercice 1 :**  
-Quels sont les composants dont la perte entraîne une perte de données ?  
+Quels sont les composants dont la perte entraîne une perte de données ? Le PVC pra-backup : C'est le plus dangereux. Si on perd ce volume, on perd toutes nos chances de revenir en arrière car c'est là qu'on stocke nos copies de sécurité.
+Le disque physique (Node) : Comme on utilise un cluster local (K3d), si l'ordinateur qui fait tourner le cluster lâche, les volumes pra-data et pra-backup disparaissent avec lui.
   
 *..Répondez à cet exercice ici..*
 
 **Exercice 2 :**  
 Expliquez nous pourquoi nous n'avons pas perdu les données lors de la supression du PVC pra-data  
   
-*..Répondez à cet exercice ici..*
+*..Répondez à cet exercice ici..*  On n'a rien perdu parce qu'on a été prévoyants ! Grâce au CronJob, une copie de la base de données était faite toutes les minutes vers un autre endroit sûr (pra-backup). Quand on a supprimé le disque de production, les données existaient encore "en double" sur le disque de sauvegarde. Il suffisait juste de faire un copier-coller (le Job de restore) pour tout remettre en place.
 
 **Exercice 3 :**  
 Quels sont les RTO et RPO de cette solution ?  
   
-*..Répondez à cet exercice ici..*
+*..Répondez à cet exercice ici..* RPO (La perte de données) : 1 minute. C'est le temps entre deux sauvegardes automatiques. Au pire, on perd 59 secondes de messages.
+
+RTO (Le temps de réparation) : Environ 2 à 3 minutes. C'est le temps qu'il nous faut pour recréer le disque vide et lancer le script de restauration.
 
 **Exercice 4 :**  
 Pourquoi cette solution (cet atelier) ne peux pas être utilisé dans un vrai environnement de production ? Que manque-t-il ?   
   
-*..Répondez à cet exercice ici..*
+*..Répondez à cet exercice ici..*Tout est au même endroit : Si le serveur brûle, on perd la production ET les sauvegardes. En vrai, on envoie les backups sur un serveur externe (comme AWS S3).
+Pas d'alertes : Si le backup s'arrête de marcher, on ne le sait pas. On s'en rendrait compte trop tard, au moment du crash.
+Sécurité : Les permissions sur les dossiers sont trop larges (chmod 777), n'importe qui pourrait effacer la base.
   
 **Exercice 5 :**  
 Proposez une archtecture plus robuste.   
   
 *..Répondez à cet exercice ici..*
+Utiliser une base de données managée (qui fait ses propres backups et se répare toute seule).
+Stocker les sauvegardes sur un cloud externe (géographiquement loin du cluster).
 
+Ajouter un système de Monitoring (Prometheus/Grafana) pour être prévenu par mail ou Slack si un backup échoue.
 ---------------------------------------------------
 Séquence 6 : Ateliers  
 Difficulté : Moyenne (~2 heures)
